@@ -97,6 +97,7 @@ public class PgRule extends PgStatementWithSearchPath{
     public String getCreationSQL() {
         final StringBuilder sbSQL = new StringBuilder();
         sbSQL.append("CREATE RULE ");
+        sbSQL.append("OR REPLACE ");	// P.Smirnov
         sbSQL.append(PgDiffUtils.getQuotedName(getName()));
         sbSQL.append(" AS\n    ON ").append(getEvent());
         sbSQL.append(" TO ").append(PgDiffUtils.getQuotedName(getContainingSchema().getName())).append('.')
@@ -147,6 +148,7 @@ public class PgRule extends PgStatementWithSearchPath{
     @Override
     public String getDropSQL() {
         StringBuilder sbSQL = new StringBuilder("DROP RULE ");
+        sbSQL.append("IF EXISTS ");		// P.Smirnov
         sbSQL.append(PgDiffUtils.getQuotedName(getName()));
         sbSQL.append(" ON ").append(PgDiffUtils.getQuotedName(getContainingSchema().getName())).append('.')
         .append(PgDiffUtils.getQuotedName(getParent().getName())).append(';');

@@ -23,6 +23,7 @@ public class PgSchema extends AbstractSchema {
     public String getCreationSQL() {
         final StringBuilder sbSQL = new StringBuilder();
         sbSQL.append("CREATE SCHEMA ");
+        sbSQL.append("IF NOT EXISTS ");	// P.Smirnov
         sbSQL.append(PgDiffUtils.getQuotedName(getName()));
 
         sbSQL.append(';');
@@ -40,7 +41,9 @@ public class PgSchema extends AbstractSchema {
 
     @Override
     public String getDropSQL() {
-        return "DROP SCHEMA " + PgDiffUtils.getQuotedName(getName()) + ';';
+        return "DROP SCHEMA "
+        		+ "IF EXISTS "	// P.Smirnov
+        		+ PgDiffUtils.getQuotedName(getName()) + ';';
     }
 
     @Override

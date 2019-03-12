@@ -92,6 +92,7 @@ public class PgOperator extends PgStatementWithSearchPath {
     public String getDropSQL() {
         final StringBuilder sbString = new StringBuilder();
         sbString.append("DROP OPERATOR ");
+        sbString.append("IF EXISTS ");	// P.Smirnov
         sbString.append(PgDiffUtils.getQuotedName(getContainingSchema().getName())).append('.');
         appendOperatorSignature(sbString);
         sbString.append(';');

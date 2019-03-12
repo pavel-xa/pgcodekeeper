@@ -160,7 +160,9 @@ public class PgTrigger extends AbstractTrigger {
 
     @Override
     public String getDropSQL() {
-        return "DROP TRIGGER " + PgDiffUtils.getQuotedName(getName()) + " ON "
+        return "DROP TRIGGER "
+        		+ "IF EXISTS "	// P.Smirnov
+        		+ PgDiffUtils.getQuotedName(getName()) + " ON "
                 + getTableName() + ";";
     }
 

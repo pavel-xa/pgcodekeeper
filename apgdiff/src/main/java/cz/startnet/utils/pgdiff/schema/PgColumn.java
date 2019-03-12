@@ -72,6 +72,7 @@ public class PgColumn extends AbstractColumn implements PgOptionContainer  {
         if (getType() != null) {
             sb.append(getAlterTable());
             sb.append("\n\tADD COLUMN ")
+            .append("IF NOT EXISTS ")		// P.Smirnov
             .append(PgDiffUtils.getQuotedName(name))
             .append(' ')
             .append(getType());
@@ -108,7 +109,9 @@ public class PgColumn extends AbstractColumn implements PgOptionContainer  {
     @Override
     public String getDropSQL() {
         if (getType() != null) {
-            return getAlterTable() + "\n\tDROP COLUMN "
+            return getAlterTable() 
+            		+ "\n\tDROP COLUMN "
+            		+ "IF EXISTS "		// P.Smirnov
                     + PgDiffUtils.getQuotedName(getName()) + ';';
         }
 

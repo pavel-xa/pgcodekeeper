@@ -450,7 +450,9 @@ public class PgType extends AbstractType {
 
     @Override
     public String getDropSQL() {
-        return "DROP TYPE " + PgDiffUtils.getQuotedName(getContainingSchema().getName()) + '.'
+        return "DROP TYPE "
+        		+ "IF EXISTS "		// P.Smirnov
+        		+ PgDiffUtils.getQuotedName(getContainingSchema().getName()) + '.'
                 + PgDiffUtils.getQuotedName(getName()) + ';';
     }
 
@@ -520,6 +522,7 @@ public class PgType extends AbstractType {
             if (newType.getAttr(attr.getName()) == null) {
                 isNeedDepcies.set(true);
                 attrSb.append("\n\tDROP ATTRIBUTE ")
+                .append("IF EXISTS ")	// P.Smirnov
                 .append(PgDiffUtils.getQuotedName(attr.getName()))
                 .append(", ");
             }
@@ -543,7 +546,9 @@ public class PgType extends AbstractType {
                 sb.append("\n\nALTER TYPE ")
                 .append(PgDiffUtils.getQuotedName(getContainingSchema().getName())).append('.')
                 .append(PgDiffUtils.getQuotedName(getName()))
-                .append("\n\tADD VALUE ").append(value);
+                .append("\n\tADD VALUE ")
+                .append("IF NOT EXISTS ")	// P.Smirnov
+                .append(value);
                 if (i == 0) {
                     sb.append(" BEFORE ").append(oldEnums.get(0));
                 } else {
