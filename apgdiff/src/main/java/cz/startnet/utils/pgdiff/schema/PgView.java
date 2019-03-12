@@ -44,11 +44,17 @@ public class PgView extends AbstractView implements PgOptionContainer  {
     @Override
     public String getCreationSQL() {
         final StringBuilder sbSQL = new StringBuilder(getQuery().length() * 2);
-        sbSQL.append("CREATE");
-        if (isMatView()) {
-            sbSQL.append(" MATERIALIZED");
+        sbSQL.append("CREATE ");
+        if (!isMatView()) {
+            sbSQL.append("OR REPLACE ");		// P.Smirnov
         }
-        sbSQL.append(" VIEW ");
+        if (isMatView()) {
+            sbSQL.append("MATERIALIZED ");
+        }
+        sbSQL.append("VIEW ");
+        if (isMatView()) {
+            sbSQL.append("IF NOT EXISTS ");		// P.Smirnov
+        }
         sbSQL.append(getQualifiedName());
 
         if (!columnNames.isEmpty()) {
@@ -140,7 +146,7 @@ public class PgView extends AbstractView implements PgOptionContainer  {
     @Override
     public String getDropSQL() {
         String mat = isMatView() ? "MATERIALIZED " : "";
-        return "DROP " + mat + "VIEW " + getQualifiedName() + ';';
+        return "DROP " + mat + "VIEW IF EXISTS " + getQualifiedName() + ';';
     }
 
     @Override
