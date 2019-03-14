@@ -164,7 +164,9 @@ public abstract class AbstractPgTable extends AbstractTable {
 
     @Override
     public String getDropSQL() {
-        return "DROP TABLE " + getQualifiedName() + ';';
+        return "DROP TABLE "
+        		+ "IF EXISTS "		// P.Smirnov
+        		+ getQualifiedName() + ';';
     }
 
     @Override

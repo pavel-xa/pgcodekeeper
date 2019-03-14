@@ -31,6 +31,7 @@ public abstract class AbstractRegularTable extends AbstractPgTable {
             sbSQL.append("UNLOGGED ");
         }
         sbSQL.append("TABLE ").append(getQualifiedName());
+        sbSQL.append("IF NOT EXISTS ");		//P.Smirnov
     }
 
     @Override
@@ -40,6 +41,7 @@ public abstract class AbstractRegularTable extends AbstractPgTable {
             sb.append("\n\n");
         }
         sb.append("ALTER TABLE ");
+        sb.append("IF EXISTS ");		 //P.Smirnov
         if (only) {
             sb.append("ONLY ");
         }

@@ -32,6 +32,7 @@ public abstract class AbstractForeignTable extends AbstractPgTable {
             sb.append("\n\n");
         }
         sb.append("ALTER FOREIGN TABLE ");
+        sb.append("IF EXISTS ");		// P.Smirnov
         if (only) {
             sb.append("ONLY ");
         }
@@ -41,7 +42,9 @@ public abstract class AbstractForeignTable extends AbstractPgTable {
 
     @Override
     public String getDropSQL() {
-        return "DROP FOREIGN TABLE " + getQualifiedName() + ';';
+        return "DROP FOREIGN TABLE "
+        		+ "IF EXISTS "		// P.Smirnov
+        		+ getQualifiedName() + ';';
     }
 
     @Override
@@ -103,7 +106,9 @@ public abstract class AbstractForeignTable extends AbstractPgTable {
 
     @Override
     protected void appendName(StringBuilder sbSQL) {
-        sbSQL.append("CREATE FOREIGN TABLE ").append(getQualifiedName());
+        sbSQL.append("CREATE FOREIGN TABLE ")
+        	 .append("IF NOT EXISTS ")		// P.Smirnov
+        	 .append(getQualifiedName());
     }
 
     @Override

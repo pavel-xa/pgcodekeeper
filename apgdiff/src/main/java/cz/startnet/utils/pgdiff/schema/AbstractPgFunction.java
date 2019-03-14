@@ -51,6 +51,7 @@ public abstract class AbstractPgFunction extends AbstractFunction {
         sbString.append("DROP ");
         sbString.append(getStatementType().name());
         sbString.append(' ');
+        sbString.append("IF EXISTS ");	// P.Smirnov
         sbString.append(PgDiffUtils.getQuotedName(getContainingSchema().getName())).append('.');
         if (getStatementType() == DbObjType.AGGREGATE) {
             ((PgAggregate) this).appendAggSignature(sbString);
