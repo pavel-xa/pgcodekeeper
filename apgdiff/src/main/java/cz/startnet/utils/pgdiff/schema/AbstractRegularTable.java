@@ -30,8 +30,10 @@ public abstract class AbstractRegularTable extends AbstractPgTable {
         if (!isLogged()) {
             sbSQL.append("UNLOGGED ");
         }
-        sbSQL.append("TABLE ").append(getQualifiedName());
-        sbSQL.append(" IF NOT EXISTS");		//P.Smirnov
+        sbSQL.append("TABLE ")
+        .append("IF NOT EXISTS ")		//P.Smirnov
+        .append(getQualifiedName());
+        
     }
 
     @Override
