@@ -215,9 +215,13 @@ public class PgColumn extends AbstractColumn implements PgOptionContainer  {
             sb.append(getAlterColumn(true, false, PgDiffUtils.getQuotedName(name)));
 
             if (newIdentityType == null) {
-                sb.append(" DROP IDENTITY;");
+                sb.append(" DROP IDENTITY")
+                .append(" IF EXISTS")		// P.Smirnov
+                .append(";");
             } else if (oldIdentityType == null) {
-                sb.append(" ADD GENERATED ")
+            	sb.append(" DROP IDENTITY IF EXISTS;")									// P.Smirnov
+            	.append(getAlterColumn(true, false, PgDiffUtils.getQuotedName(name)))	// P.Smirnov
+                .append(" ADD GENERATED ")
                 .append(newIdentityType)
                 .append(" AS IDENTITY (")
                 .append("\n\tSEQUENCE NAME ")

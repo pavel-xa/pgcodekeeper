@@ -45,10 +45,9 @@ public class PgView extends AbstractView implements PgOptionContainer  {
     @Override
     public String getCreationSQL() {
         final StringBuilder sbSQL = new StringBuilder(getQuery().length() * 2);
-        sbSQL.append("CREATE ");
-        if (!isMatView()) {
-            sbSQL.append("OR REPLACE ");		// P.Smirnov
-        }
+        
+        sbSQL.append(getDropSQL());				// P.Smirnov
+        sbSQL.append("\n\nCREATE ");
         if (isMatView()) {
             sbSQL.append("MATERIALIZED ");
         }

@@ -61,7 +61,8 @@ public class PgTrigger extends AbstractTrigger {
     @Override
     public String getCreationSQL() {
         final StringBuilder sbSQL = new StringBuilder();
-        sbSQL.append("CREATE");
+        sbSQL.append(getDropSQL());				// P.Smirnov
+        sbSQL.append("\n\nCREATE");
         if (isConstraint()) {
             sbSQL.append(" CONSTRAINT");
         }
