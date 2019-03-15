@@ -100,8 +100,7 @@ public class PgRule extends PgStatementWithSearchPath{
         sbSQL.append("OR REPLACE ");	// P.Smirnov
         sbSQL.append(PgDiffUtils.getQuotedName(getName()));
         sbSQL.append(" AS\n    ON ").append(getEvent());
-        sbSQL.append(" TO ").append(PgDiffUtils.getQuotedName(getContainingSchema().getName())).append('.')
-        .append(PgDiffUtils.getQuotedName(getParent().getName()));
+        sbSQL.append(" TO ").append(getParent().getQualifiedName());
         if (getCondition() != null && !getCondition().isEmpty()){
             sbSQL.append("\n  WHERE ").append(getCondition());
         }
@@ -128,9 +127,7 @@ public class PgRule extends PgStatementWithSearchPath{
 
         if (enabledState != null) {
             sbSQL.append("\n\nALTER TABLE ")
-            .append(PgDiffUtils.getQuotedName(getParent().getParent().getName()))
-            .append('.')
-            .append(PgDiffUtils.getQuotedName(getParent().getName()))
+            .append(getParent().getQualifiedName())
             .append(' ')
             .append(enabledState)
             .append(" RULE ")
@@ -150,8 +147,7 @@ public class PgRule extends PgStatementWithSearchPath{
         StringBuilder sbSQL = new StringBuilder("DROP RULE ");
         sbSQL.append("IF EXISTS ");		// P.Smirnov
         sbSQL.append(PgDiffUtils.getQuotedName(getName()));
-        sbSQL.append(" ON ").append(PgDiffUtils.getQuotedName(getContainingSchema().getName())).append('.')
-        .append(PgDiffUtils.getQuotedName(getParent().getName())).append(';');
+        sbSQL.append(" ON ").append(getParent().getQualifiedName()).append(';');
         return sbSQL.toString();
     }
 
@@ -175,9 +171,7 @@ public class PgRule extends PgStatementWithSearchPath{
                 newEnabledState = "ENABLE";
             }
             sb.append("\n\nALTER TABLE ")
-            .append(PgDiffUtils.getQuotedName(newRule.getParent().getParent().getName()))
-            .append('.')
-            .append(PgDiffUtils.getQuotedName(newRule.getParent().getName()))
+            .append(getParent().getQualifiedName())
             .append(' ')
             .append(newEnabledState)
             .append(" RULE ")
@@ -201,11 +195,6 @@ public class PgRule extends PgStatementWithSearchPath{
         ruleDst.commands.addAll(commands);
         ruleDst.setEnabledState(getEnabledState());
         return ruleDst;
-    }
-
-    @Override
-    public PgRule deepCopy() {
-        return shallowCopy();
     }
 
     @Override

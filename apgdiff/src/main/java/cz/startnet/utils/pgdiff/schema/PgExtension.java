@@ -114,10 +114,6 @@ public class PgExtension extends PgStatement {
         copyBaseFields(extDst);
         extDst.setSchema(getSchema());
         return extDst;
-    }
 
-    @Override
-    public PgExtension deepCopy() {
-        return shallowCopy();
     }
 }

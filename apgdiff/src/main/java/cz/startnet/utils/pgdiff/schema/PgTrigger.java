@@ -54,8 +54,8 @@ public class PgTrigger extends AbstractTrigger {
     private String newTable;
 
 
-    public PgTrigger(String name, String tableName) {
-        super(name, tableName);
+    public PgTrigger(String name) {
+        super(name);
     }
 
     @Override
@@ -110,7 +110,7 @@ public class PgTrigger extends AbstractTrigger {
         }
 
         sbSQL.append(" ON ");
-        sbSQL.append(getTableName());
+        sbSQL.append(getParent().getQualifiedName());
 
         if (isConstraint()) {
             if (getRefTableName() != null){
@@ -164,7 +164,7 @@ public class PgTrigger extends AbstractTrigger {
         return "DROP TRIGGER "
         		+ "IF EXISTS "	// P.Smirnov
         		+ PgDiffUtils.getQuotedName(getName()) + " ON "
-                + getTableName() + ";";
+                + getParent().getQualifiedName() + ";";
     }
 
     @Override
@@ -315,8 +315,12 @@ public class PgTrigger extends AbstractTrigger {
     }
 
     @Override
-    protected boolean compareUnalterable(AbstractTrigger obj) {
-        if (obj instanceof PgTrigger && super.compareUnalterable(obj)) {
+    public boolean compare(PgStatement obj) {
+        return super.compare(obj) && compareUnalterable(obj);
+    }
+
+    private boolean compareUnalterable(PgStatement obj) {
+        if (obj instanceof PgTrigger) {
             PgTrigger trigger = (PgTrigger) obj;
             return  tgType == trigger.getType()
                     && (forEachRow == trigger.isForEachRow())
@@ -338,7 +342,6 @@ public class PgTrigger extends AbstractTrigger {
 
     @Override
     public void computeHash(Hasher hasher) {
-        super.computeHash(hasher);
         hasher.put(tgType);
         hasher.put(forEachRow);
         hasher.put(function);
@@ -357,7 +360,7 @@ public class PgTrigger extends AbstractTrigger {
 
     @Override
     protected AbstractTrigger getTriggerCopy() {
-        PgTrigger trigger = new PgTrigger(getName(), getTableName());
+        PgTrigger trigger = new PgTrigger(getName());
         trigger.setType(getType());
         trigger.setForEachRow(isForEachRow());
         trigger.setFunction(getFunction());
