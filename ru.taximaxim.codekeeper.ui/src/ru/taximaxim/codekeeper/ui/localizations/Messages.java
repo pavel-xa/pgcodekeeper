@@ -34,6 +34,12 @@ public final class Messages extends NLS {
 
     // ui
     public static String sqlScriptDialog_exception_during_script_execution;
+    public static String ShowConsoleParticipant_remove;
+
+    public static String ShowConsoleParticipant_remove_all;
+
+    public static String ShowConsoleParticipant_terminate;
+
     public static String SQLEditorContentOutlinePage_hide_non_dangerous;
 
     public static String SQLEditorContentOutlinePage_sort_alphabetically;
@@ -82,6 +88,8 @@ public final class Messages extends NLS {
 
     public static String SqlEditor_update_ddl;
 
+    public static String UiProgressReporter_warning;
+
     public static String UpdateDdl_read_only_db_message;
 
     public static String UpdateDdl_read_only_db_title;
@@ -117,6 +125,8 @@ public final class Messages extends NLS {
     public static String differ_get_differ;
     public static String differ_reverse_diff;
     public static String diffTableViewer_change_type;
+    public static String diffTableViewer_for_database;
+    public static String diffTableViewer_for_project;
     public static String diffTableViewer_container;
     public static String diffTableViewer_db_user;
     public static String diffTableViewer_deselect_child_elements;
@@ -225,6 +235,9 @@ public final class Messages extends NLS {
     public static String DbPropertyListEditor_tbl_col_name;
     public static String DbPropertyListEditor_tbl_col_value;
 
+    public static String DbStoreCombo_db_binding_property;
+    public static String DbStoreCombo_db_binding_property_title;
+
     public static String DbStoreEditorDialog_failed_connection;
 
     public static String DbStoreEditorDialog_failed_connection_reason;
@@ -234,6 +247,20 @@ public final class Messages extends NLS {
     public static String DbStoreEditorDialog_connect_to_ms;
 
     public static String DbStoreEditorDialog_connection_properties;
+
+    public static String DbStoreEditorDialog_dump_custom_parameters;
+
+    public static String DbStoreEditorDialog_dump_executable;
+
+    public static String DbStoreEditorDialog_dump_file_dialog_header;
+
+    public static String DbStoreEditorDialog_dump_filter;
+
+    public static String DbStoreEditorDialog_dump_properties;
+
+    public static String DbStoreEditorDialog_dump_switch;
+
+    public static String DbStoreEditorDialog_dump_browse;
 
     public static String DbStoreEditorDialog_pgcodekeeperignore_files_filter;
 
@@ -399,9 +426,7 @@ public final class Messages extends NLS {
     public static String ProjectProperties_force_unix_newlines;
 
     public static String ProjectProperties_force_unix_newlines_desc;
-    public static String generalPrefPage_pg_dump_custom_parameters;
-    public static String generalPrefPage_pg_dump_switch;
-    public static String generalPrefPage_pg_dump_executable;
+
     public static String generalPrefPage_show_console_when_program_write_to_console;
 
     public static String generalPrefPage_use_depcy_on_commit_page;
@@ -636,6 +661,9 @@ public final class Messages extends NLS {
 
     public static String PrefListEditor_cannot_add;
 
+    public static String ProjectEditorDiffer_changed_direction_of_roll_on_title;
+    public static String ProjectEditorDiffer_changed_direction_of_roll_on;
+
     public static String ProjectEditorDiffer_commit_error;
     public static String ProjectEditorDiffer_error_bad_input_type;
 
@@ -655,6 +683,8 @@ public final class Messages extends NLS {
     public static String ProjectEditorDiffer_library_duplication_exception;
 
     public static String ProjectEditorDiffer_no_differences;
+
+    public static String ProjectEditorDiffer_database;
 
     public static String ProjectEditorDiffer_project;
     public static String ProjectEditorDiffer_script_creation_message;
@@ -697,6 +727,8 @@ public final class Messages extends NLS {
     public static String ProjectProperties_change_projprefs_warn;
 
     public static String ProjectProperties_posix_is_used_warn;
+
+    public static String ProjectProperties_binding_to_db_connection;
 
     public static String ProjectProperties_disable_parser_in_external_files;
     public static String ProjectUpdater_error_backup_restore;
