@@ -114,6 +114,7 @@ public final class Messages extends NLS {
     public static String dbStoreEditorDialog_db_info;
     public static String dbStoreEditorDialog_db_store_editor;
     public static String dbStoreEditorDialog_not_valid_port_number;
+    public static String dbStoreEditorDialog_empty_name;
 
     // ui.differ
     public static String dbSource_db_is_not_loaded_yet_object_is_null;
@@ -211,6 +212,8 @@ public final class Messages extends NLS {
     public static String initProjectFromSource_ioexception_while_creating_project;
     public static String newProjWizard_error_in_initializing_repo_from_source;
     public static String newProjWizard_new_pg_db_project;
+
+    public static String txtNameEditingSupport_cannot_add_empty;
 
     // ui.prefs
     public static String dBUpdatePrefPage_alter_column_statement;
@@ -331,6 +334,8 @@ public final class Messages extends NLS {
 
     public static String DependencyProperties_add_uri;
 
+    public static String DependencyProperties_attention;
+
     public static String DependencyProperties_connection_start;
 
     public static String DependencyProperties_empty_scheme;
@@ -338,6 +343,8 @@ public final class Messages extends NLS {
     public static String DependencyProperties_enter_connection_string;
 
     public static String DependencyProperties_enter_uri;
+
+    public static String DependencyProperties_ignore_priv_warn;
 
     public static String DependencyProperties_ignore_privileges;
 
@@ -692,6 +699,12 @@ public final class Messages extends NLS {
 
     public static String ProjectEditorDiffer_different_types;
     public static String ProjectEditorDiffer_different_types_msg;
+
+    public static String ProjectEditorDiffer_override_cancel;
+
+    public static String ProjectEditorDiffer_override_objects;
+
+    public static String ProjectEditorDiffer_override_privileges;
 
     public static String ProjectEditorInput_pgcodekeeper_project;
 
