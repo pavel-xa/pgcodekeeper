@@ -230,6 +230,8 @@ public class PgDiffTest {
                     {"modify_function_similar"},
                     // Tests scenario where FUNCTION with parallel mode is modified
                     {"modify_function_parallel"},
+                    // Tests scenario where FUNCTION with depended column is modified
+                    {"modify_function_depcy_col"},
                     // Tests scenario where TRIGGER is added.
                     {"add_trigger"},
                     // Tests scenario where TRIGGER with referencing is added.
@@ -368,6 +370,16 @@ public class PgDiffTest {
                     {"add_privilege"},
                     {"drop_privilege"},
                     {"chg_privilege"},
+                    // Test restoring the default owner privilege
+                    {"chg_def_owner_privilege"},
+                    // Test restoring the default PUBLIC privilege
+                    {"chg_def_public_privilege"},
+                    // Test restoring the default PUBLIC privilege even if the owner is unavailable
+                    {"chg_def_public_privilege_no_owner"},
+                    // Test restoring the default owner and PUBLIC privilege
+                    {"chg_def_owner_public_privilege"},
+                    // Test restoring the default privileges of AGGREGATE
+                    {"chg_def_privilege_aggr"},
                     // Test change owner
                     {"chg_owner"},
                     // Тест зависимости от колонки к функции default
