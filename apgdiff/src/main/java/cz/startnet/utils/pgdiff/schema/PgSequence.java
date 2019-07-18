@@ -20,6 +20,7 @@ public class PgSequence extends AbstractSequence {
 
     public PgSequence(String name) {
         super(name);
+        setCache("1");
     }
 
     @Override
@@ -234,6 +235,14 @@ public class PgSequence extends AbstractSequence {
             this.minValue = null;
         } else {
             this.minValue = "" + min;
+        }
+
+        if (getStartWith() == null) {
+            if (this.minValue != null) {
+                setStartWith(this.minValue);
+            } else {
+                setStartWith(inc < 0 ? "-1" : "1");
+            }
         }
         resetHash();
     }
