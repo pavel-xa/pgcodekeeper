@@ -66,12 +66,7 @@ public abstract class AbstractPgFunction extends AbstractFunction {
     public boolean appendAlterSQL(PgStatement newCondition, StringBuilder sb,
             AtomicBoolean isNeedDepcies) {
         final int startLength = sb.length();
-        AbstractPgFunction newAbstractPgFunction;
-        if (newCondition instanceof AbstractPgFunction) {
-            newAbstractPgFunction = (AbstractPgFunction) newCondition;
-        } else {
-            return false;
-        }
+        AbstractPgFunction newAbstractPgFunction = (AbstractPgFunction) newCondition;
 
         if (!compareUnalterable(newAbstractPgFunction)) {
             if (needDrop(newAbstractPgFunction)) {
@@ -204,7 +199,6 @@ public abstract class AbstractPgFunction extends AbstractFunction {
 
         resetHash();
     }
-
 
     public String getVolatileType() {
         return volatileType;
