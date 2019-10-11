@@ -2044,9 +2044,11 @@ tokens_nonreserved
     | STDIN
     | STDOUT
     | STORAGE
+    | STORED
     | STRICT
     | STRIP
     | SUBSCRIPTION
+    | SUPPORT
     | SYSID
     | SYSTEM
     | TABLES
@@ -2301,6 +2303,7 @@ tokens_nonkeyword
     | LEFTARG
     | LEXIZE
     | LEXTYPES
+    | LIST
     | LOCALE 
     | LOGIN
     | MAIN
