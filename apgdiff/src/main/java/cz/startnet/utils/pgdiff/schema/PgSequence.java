@@ -16,7 +16,7 @@ import cz.startnet.utils.pgdiff.hashers.Hasher;
  */
 public class PgSequence extends AbstractSequence {
 
-    private String ownedBy;
+    private GenericColumn ownedBy;
 
     public PgSequence(String name) {
         super(name);
@@ -93,7 +93,7 @@ public class PgSequence extends AbstractSequence {
      * Creates SQL statement for modification "OWNED BY" parameter.
      */
     public String getOwnedBySQL() {
-        if (getOwnedBy() == null || getOwnedBy().isEmpty()) {
+        if (getOwnedBy() == null) {
             return "";
         }
         final StringBuilder sbSQL = new StringBuilder();
@@ -101,7 +101,7 @@ public class PgSequence extends AbstractSequence {
         sbSQL.append("\n\nALTER SEQUENCE ");
         sbSQL.append("IF EXISTS ");		// P.Smirnov
         sbSQL.append(getQualifiedName());
-        sbSQL.append("\n\tOWNED BY ").append(getOwnedBy()).append(';');
+        sbSQL.append("\n\tOWNED BY ").append(getOwnedBy().getQualifiedName()).append(';');
 
         return sbSQL.toString();
     }
@@ -148,7 +148,7 @@ public class PgSequence extends AbstractSequence {
         return sb.length() > startLength;
     }
 
-    private boolean compareSequenceBody(AbstractSequence newSequence, StringBuilder sbSQL) {
+    private boolean compareSequenceBody(PgSequence newSequence, StringBuilder sbSQL) {
         final String oldType = getDataType();
         final String newType = newSequence.getDataType();
 
@@ -201,6 +201,12 @@ public class PgSequence extends AbstractSequence {
             sbSQL.append("\n\tCYCLE");
         }
 
+        final GenericColumn newOwnedBy = newSequence.getOwnedBy();
+        if (!Objects.equals(getOwnedBy(), newOwnedBy)) {
+            sbSQL.append("\n\tOWNED BY ");
+            sbSQL.append(newOwnedBy != null ? newOwnedBy.getQualifiedName() : "NONE");
+        }
+
         return sbSQL.length() > 0;
     }
 
@@ -238,11 +244,11 @@ public class PgSequence extends AbstractSequence {
     }
 
 
-    public String getOwnedBy() {
+    public GenericColumn getOwnedBy() {
         return ownedBy;
     }
 
-    public void setOwnedBy(final String ownedBy) {
+    public void setOwnedBy(final GenericColumn ownedBy) {
         this.ownedBy = ownedBy;
         resetHash();
     }
@@ -255,7 +261,7 @@ public class PgSequence extends AbstractSequence {
     @Override
     public void computeHash(Hasher hasher) {
         super.computeHash(hasher);
-        hasher.put(ownedBy);
+        hasher.put(ownedBy == null ? 0 : ownedBy.hashCode());
     }
 
     @Override
