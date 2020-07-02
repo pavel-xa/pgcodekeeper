@@ -13,12 +13,14 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.antlr.v4.runtime.ParserRuleContext;
 
 import cz.startnet.utils.pgdiff.PgDiffUtils;
 import cz.startnet.utils.pgdiff.parsers.antlr.QNameParser;
 import cz.startnet.utils.pgdiff.parsers.antlr.SQLParser.Alias_clauseContext;
+import cz.startnet.utils.pgdiff.parsers.antlr.SQLParser.Data_statementContext;
 import cz.startnet.utils.pgdiff.parsers.antlr.SQLParser.Delete_stmt_for_psqlContext;
 import cz.startnet.utils.pgdiff.parsers.antlr.SQLParser.IdentifierContext;
 import cz.startnet.utils.pgdiff.parsers.antlr.SQLParser.Insert_stmt_for_psqlContext;
@@ -29,9 +31,8 @@ import cz.startnet.utils.pgdiff.parsers.antlr.SQLParser.With_clauseContext;
 import cz.startnet.utils.pgdiff.parsers.antlr.SQLParser.With_queryContext;
 import cz.startnet.utils.pgdiff.parsers.antlr.rulectx.SelectStmt;
 import cz.startnet.utils.pgdiff.schema.GenericColumn;
+import cz.startnet.utils.pgdiff.schema.IDatabase;
 import cz.startnet.utils.pgdiff.schema.IRelation;
-import cz.startnet.utils.pgdiff.schema.PgDatabase;
-import cz.startnet.utils.pgdiff.schema.PgView;
 import ru.taximaxim.codekeeper.apgdiff.ApgdiffConsts;
 import ru.taximaxim.codekeeper.apgdiff.log.Log;
 import ru.taximaxim.codekeeper.apgdiff.model.difftree.DbObjType;
@@ -80,8 +81,8 @@ public abstract class AbstractExprWithNmspc<T extends ParserRuleContext> extends
      */
     protected final Map<String, List<Pair<String, String>>> complexNamespace = new LinkedHashMap<>();
 
-    public AbstractExprWithNmspc(PgDatabase db, DbObjType... disabledDepcies) {
-        super(db, disabledDepcies);
+    public AbstractExprWithNmspc(IDatabase db) {
+        super(db);
     }
 
     protected AbstractExprWithNmspc(AbstractExpr parent) {
@@ -174,10 +175,14 @@ public abstract class AbstractExprWithNmspc<T extends ParserRuleContext> extends
             if (rel == null) {
                 continue;
             }
-            if (rel instanceof PgView) {
-                analyzeViewColumns((PgView) rel);
+
+            Stream<Pair<String, String>> columns = rel.getRelationColumns();
+            if (DbObjType.VIEW == rel.getStatementType() && columns == null) {
+                analyzeViewColumns(rel);
+                columns = rel.getRelationColumns();
             }
-            for (Pair<String, String> col : PgDiffUtils.sIter(rel.getRelationColumns())) {
+
+            for (Pair<String, String> col : PgDiffUtils.sIter(columns)) {
                 if (col.getFirst().equals(name)) {
                     return new Pair<>(rel, col);
                 }
@@ -332,7 +337,8 @@ public abstract class AbstractExprWithNmspc<T extends ParserRuleContext> extends
         for (With_queryContext withQuery : with.with_query()) {
             String withName = withQuery.query_name.getText();
 
-            Select_stmtContext withSelect = withQuery.select_stmt();
+            Data_statementContext data = withQuery.data_statement();
+            Select_stmtContext withSelect = data.select_stmt();
             Delete_stmt_for_psqlContext delete;
             Insert_stmt_for_psqlContext insert;
             Update_stmt_for_psqlContext update;
@@ -340,11 +346,11 @@ public abstract class AbstractExprWithNmspc<T extends ParserRuleContext> extends
             List<ModPair<String, String>> pairs;
             if (withSelect != null) {
                 pairs = new Select(this).analyze(new SelectStmt(withSelect), withQuery);
-            } else if ((delete = withQuery.delete_stmt_for_psql()) != null) {
+            } else if ((delete = data.delete_stmt_for_psql()) != null) {
                 pairs = new Delete(this).analyze(delete);
-            } else if ((insert = withQuery.insert_stmt_for_psql()) != null) {
+            } else if ((insert = data.insert_stmt_for_psql()) != null) {
                 pairs = new Insert(this).analyze(insert);
-            } else if ((update = withQuery.update_stmt_for_psql()) != null) {
+            } else if ((update = data.update_stmt_for_psql()) != null) {
                 pairs = new Update(this).analyze(update);
             } else {
                 Log.log(Log.LOG_WARNING, "No alternative in Cte!");

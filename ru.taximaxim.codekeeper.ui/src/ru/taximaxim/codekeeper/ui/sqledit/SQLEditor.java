@@ -12,10 +12,12 @@ import java.sql.SQLException;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.ResourceBundle;
-import java.util.Set;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
@@ -38,13 +40,19 @@ import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.IDocument;
+import org.eclipse.jface.text.ISynchronizable;
+import org.eclipse.jface.text.ITextSelection;
 import org.eclipse.jface.text.Position;
 import org.eclipse.jface.text.source.Annotation;
 import org.eclipse.jface.text.source.DefaultCharacterPairMatcher;
 import org.eclipse.jface.text.source.IAnnotationModel;
+import org.eclipse.jface.text.source.IAnnotationModelExtension;
 import org.eclipse.jface.text.source.ICharacterPairMatcher;
 import org.eclipse.jface.viewers.DecorationOverlayIcon;
 import org.eclipse.jface.viewers.IDecoration;
+import org.eclipse.jface.viewers.ISelection;
+import org.eclipse.jface.viewers.ISelectionProvider;
+import org.eclipse.jface.viewers.SelectionChangedEvent;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Point;
@@ -71,6 +79,7 @@ import org.eclipse.ui.progress.IProgressConstants2;
 import org.eclipse.ui.texteditor.AbstractDecoratedTextEditor;
 import org.eclipse.ui.texteditor.ChainedPreferenceStore;
 import org.eclipse.ui.texteditor.ContentAssistAction;
+import org.eclipse.ui.texteditor.IDocumentProvider;
 import org.eclipse.ui.texteditor.ITextEditorActionDefinitionIds;
 import org.eclipse.ui.texteditor.SourceViewerDecorationSupport;
 import org.eclipse.ui.views.contentoutline.IContentOutlinePage;
@@ -88,9 +97,11 @@ import ru.taximaxim.codekeeper.apgdiff.ApgdiffConsts.JDBC_CONSTS;
 import ru.taximaxim.codekeeper.apgdiff.fileutils.TempFile;
 import ru.taximaxim.codekeeper.ui.Activator;
 import ru.taximaxim.codekeeper.ui.IPartAdapter2;
+import ru.taximaxim.codekeeper.ui.ITextErrorReporter;
 import ru.taximaxim.codekeeper.ui.Log;
 import ru.taximaxim.codekeeper.ui.UIConsts.CMD_VARS;
 import ru.taximaxim.codekeeper.ui.UIConsts.CONTEXT;
+import ru.taximaxim.codekeeper.ui.UIConsts.DB_BIND_PREF;
 import ru.taximaxim.codekeeper.ui.UIConsts.DB_UPDATE_PREF;
 import ru.taximaxim.codekeeper.ui.UIConsts.LANGUAGE;
 import ru.taximaxim.codekeeper.ui.UIConsts.MARKER;
@@ -113,7 +124,8 @@ import ru.taximaxim.codekeeper.ui.pgdbproject.parser.PgDbParser;
 import ru.taximaxim.codekeeper.ui.pgdbproject.parser.UIProjectLoader;
 import ru.taximaxim.codekeeper.ui.propertytests.UpdateDdlJobTester;
 
-public class SQLEditor extends AbstractDecoratedTextEditor implements IResourceChangeListener {
+public class SQLEditor extends AbstractDecoratedTextEditor
+implements IResourceChangeListener, ITextErrorReporter {
 
     static final String CONTENT_ASSIST = "ContentAssist"; //$NON-NLS-1$
 
@@ -129,7 +141,11 @@ public class SQLEditor extends AbstractDecoratedTextEditor implements IResourceC
     private boolean isMsSql;
     private boolean isLargeFile;
 
+    private Annotation[] occurrenceAnnotations = null;
+
     private ScriptThreadJobWrapper scriptThreadJobWrapper;
+
+    private EditorSelectionChangedListener changedListener;
 
     private final Listener parserListener = e -> {
         if (parentComposite == null) {
@@ -160,9 +176,9 @@ public class SQLEditor extends AbstractDecoratedTextEditor implements IResourceC
     public static void saveLastDb(DbInfo lastDb, IEditorInput inputForProject) {
         IResource res = ResourceUtil.getResource(inputForProject);
         if (res != null) {
-            IEclipsePreferences prefs = PgDbProject.getPrefs(res.getProject());
+            IEclipsePreferences prefs = PgDbProject.getPrefs(res.getProject(), false);
             if (prefs != null) {
-                prefs.put(PROJ_PREF.LAST_DB_STORE_EDITOR, lastDb.getName());
+                prefs.put(DB_BIND_PREF.LAST_DB_STORE_EDITOR, lastDb.getName());
                 try {
                     prefs.flush();
                 } catch (BackingStoreException ex) {
@@ -180,7 +196,7 @@ public class SQLEditor extends AbstractDecoratedTextEditor implements IResourceC
         // it's need to do for refresh content and state of DbCombo in SQLEditor
         // when it's opened as inactive second tab, while setting the binding in
         // project properties
-        DbInfo boundDb = getDbFromPref(PROJ_PREF.NAME_OF_BOUND_DB);
+        DbInfo boundDb = getDbFromPref(DB_BIND_PREF.NAME_OF_BOUND_DB);
         if (boundDb != null) {
             return boundDb;
         }
@@ -189,18 +205,18 @@ public class SQLEditor extends AbstractDecoratedTextEditor implements IResourceC
             return currentDB;
         }
 
-        return getDbFromPref(PROJ_PREF.LAST_DB_STORE_EDITOR);
+        return getDbFromPref(DB_BIND_PREF.LAST_DB_STORE_EDITOR);
     }
 
     private DbInfo getDbFromPref(String prefName) {
-        IEclipsePreferences prefs = getProjPrefs();
-        return prefs == null ? null :
-            DbInfo.getLastDb(prefs.get(prefName, "")); //$NON-NLS-1$
+        IEclipsePreferences auxPrefs = getProjDbBindPrefs();
+        return auxPrefs == null ? null :
+            DbInfo.getLastDb(auxPrefs.get(prefName, "")); //$NON-NLS-1$
     }
 
-    public IEclipsePreferences getProjPrefs() {
+    public IEclipsePreferences getProjDbBindPrefs() {
         IResource res = ResourceUtil.getResource(getEditorInput());
-        return res != null ? PgDbProject.getPrefs(res.getProject()) : null;
+        return res != null ? PgDbProject.getPrefs(res.getProject(), false) : null;
     }
 
     @Override
@@ -216,19 +232,27 @@ public class SQLEditor extends AbstractDecoratedTextEditor implements IResourceC
         parentComposite = parent;
         super.createPartControl(parent);
         setLineBackground();
+
+        changedListener = new EditorSelectionChangedListener();
+        changedListener.install(getSelectionProvider());
+
         getSite().getService(IContextService.class).activateContext(CONTEXT.EDITOR);
     }
 
     public void setLineBackground() {
         // TODO who deletes stale annotations after editor refresh?
-        Set<PgObjLocation> refs = getParser().getObjsForEditor(getEditorInput());
+        List<PgObjLocation> refs = getReferences();
         IAnnotationModel model = getSourceViewer().getAnnotationModel();
         for (PgObjLocation loc : refs) {
-            if (loc.getWarningText() != null) {
+            if (loc.isDanger()) {
                 model.addAnnotation(new Annotation(MARKER.DANGER_ANNOTATION, false, loc.getWarningText()),
                         new Position(loc.getOffset(), loc.getObjLength()));
             }
         }
+    }
+
+    private List<PgObjLocation> getReferences() {
+        return getParser().getObjsForEditor(getEditorInput());
     }
 
     @Override
@@ -251,6 +275,25 @@ public class SQLEditor extends AbstractDecoratedTextEditor implements IResourceC
         ContentAssistAction action = new ContentAssistAction(bundle, "contentAssist.", this); //$NON-NLS-1$
         action.setActionDefinitionId(ITextEditorActionDefinitionIds.CONTENT_ASSIST_PROPOSALS);
         setAction(CONTENT_ASSIST, action);
+    }
+
+    public PgObjLocation getCurrentReference() {
+        ISelectionProvider provider = getSelectionProvider();
+        if (provider == null) {
+            return null;
+        }
+
+        ISelection selection = provider.getSelection();
+        if (selection instanceof ITextSelection) {
+            ITextSelection textSelection = (ITextSelection) selection;
+            int offset = textSelection.getOffset();
+
+            return getReferences().stream()
+                    .filter(loc -> loc.getOffset() <= offset && offset <= loc.getOffset() + loc.getObjLength())
+                    .findAny().orElse(null);
+        }
+
+        return null;
     }
 
     public void changeLanguage(String language) {
@@ -411,8 +454,7 @@ public class SQLEditor extends AbstractDecoratedTextEditor implements IResourceC
             throws InterruptedException, IOException, CoreException {
         checkFileSize();
         if (isLargeFile()) {
-            parser.getObjDefinitions().clear();
-            parser.getObjReferences().clear();
+            parser.clear();
             parser.notifyListeners();
             return;
         }
@@ -420,7 +462,7 @@ public class SQLEditor extends AbstractDecoratedTextEditor implements IResourceC
         if (res instanceof IFile) {
             IFile file = (IFile) res;
             IProject proj = file.getProject();
-            IEclipsePreferences prefs = PgDbProject.getPrefs(proj);
+            IEclipsePreferences prefs = PgDbProject.getPrefs(proj, true);
 
             if (prefs != null
                     && prefs.getBoolean(PROJ_PREF.DISABLE_PARSER_IN_EXTERNAL_FILES, false)) {
@@ -458,7 +500,50 @@ public class SQLEditor extends AbstractDecoratedTextEditor implements IResourceC
         if (errorTitleImage != null) {
             errorTitleImage.dispose();
         }
+
+        if (changedListener != null)  {
+            changedListener.uninstall(getSelectionProvider());
+            changedListener = null;
+        }
+
+        removeOccurrenceAnnotations();
+
         super.dispose();
+    }
+
+    private void removeOccurrenceAnnotations() {
+        IDocumentProvider provider = getDocumentProvider();
+        if (provider == null) {
+            return;
+        }
+
+        IAnnotationModel model = provider.getAnnotationModel(getEditorInput());
+        if (model == null || occurrenceAnnotations == null) {
+            return;
+        }
+
+        synchronized (getLock(model)) {
+            if (model instanceof IAnnotationModelExtension) {
+                ((IAnnotationModelExtension) model).replaceAnnotations(occurrenceAnnotations, null);
+            } else {
+                for (Annotation annotation : occurrenceAnnotations) {
+                    model.removeAnnotation(annotation);
+                }
+            }
+
+            occurrenceAnnotations = null;
+        }
+    }
+
+    private Object getLock(IAnnotationModel model) {
+        if (model instanceof ISynchronizable) {
+            Object lock = ((ISynchronizable) model).getLockObject();
+            if (lock != null) {
+                return lock;
+            }
+        }
+
+        return model;
     }
 
     private void afterScriptFinished() {
@@ -501,13 +586,17 @@ public class SQLEditor extends AbstractDecoratedTextEditor implements IResourceC
 
         ScriptParser [] parsers = new ScriptParser[1];
         IRunnableWithProgress runnable = monitor -> {
-            ScriptParser parser = new ScriptParser(
-                    getEditorInput().getName(), textRetrieved, dbInfo.isMsSql());
-            String error = parser.getErrorMessage();
-            if (error != null) {
-                UiProgressReporter.writeSingleError(error);
-            } else {
-                parsers[0] = parser;
+            try {
+                ScriptParser parser = new ScriptParser(
+                        getEditorInput().getName(), textRetrieved, dbInfo.isMsSql());
+                String error = parser.getErrorMessage();
+                if (error != null) {
+                    UiProgressReporter.writeSingleError(error);
+                } else {
+                    parsers[0] = parser;
+                }
+            } catch (InterruptedException | IOException ex) {
+                UiProgressReporter.writeSingleError(ex.getLocalizedMessage());
             }
         };
 
@@ -538,7 +627,7 @@ public class SQLEditor extends AbstractDecoratedTextEditor implements IResourceC
             }
         }
 
-        scriptThreadJobWrapper = new ScriptThreadJobWrapper(dbInfo, parsers[0]);
+        scriptThreadJobWrapper = new ScriptThreadJobWrapper(dbInfo, parsers[0], point.y == 0 ? 0 : point.x);
         scriptThreadJobWrapper.setProperty(IProgressConstants2.SHOW_IN_TASKBAR_ICON_PROPERTY, Boolean.TRUE);
         scriptThreadJobWrapper.setUser(true);
         scriptThreadJobWrapper.schedule();
@@ -547,16 +636,27 @@ public class SQLEditor extends AbstractDecoratedTextEditor implements IResourceC
         parentComposite.setCursor(parentComposite.getDisplay().getSystemCursor(SWT.CURSOR_WAIT));
     }
 
+    @Override
+    public void setErrorPosition(int start, int length) {
+        UiSync.exec(parentComposite, () -> {
+            if (!parentComposite.isDisposed()) {
+                selectAndReveal(start, length);
+            }
+        });
+    }
+
     private class ScriptThreadJobWrapper extends SingletonEditorJob {
 
         private final DbInfo dbInfo;
         private final ScriptParser parser;
+        private final int offset;
 
-        public ScriptThreadJobWrapper(DbInfo dbInfo, ScriptParser parser) {
+        public ScriptThreadJobWrapper(DbInfo dbInfo, ScriptParser parser, int offset) {
             super(Messages.SqlEditor_update_ddl + getEditorInput().getName(),
                     SQLEditor.this, UpdateDdlJobTester.EVAL_PROP);
             this.dbInfo = dbInfo;
             this.parser = parser;
+            this.offset = offset;
         }
 
         @Override
@@ -582,10 +682,9 @@ public class SQLEditor extends AbstractDecoratedTextEditor implements IResourceC
                         dbInfo.isReadOnly(), ApgdiffConsts.UTC);
             }
 
-            IProgressReporter reporter = new UiProgressReporter(monitor);
+            IProgressReporter reporter = new UiProgressReporter(monitor, SQLEditor.this, offset);
             try (IProgressReporter toClose = reporter) {
-                List<List<String>> batches = parser.batch();
-                new JdbcRunner(monitor).runBatches(connector, batches, reporter);
+                new JdbcRunner(monitor).runBatches(connector, parser.batch(), reporter);
                 ProjectEditorDiffer.notifyDbChanged(dbInfo);
                 return Status.OK_STATUS;
             } catch (InterruptedException ex) {
@@ -604,7 +703,7 @@ public class SQLEditor extends AbstractDecoratedTextEditor implements IResourceC
             Log.log(Log.LOG_INFO, "Running DDL update using external command"); //$NON-NLS-1$
 
             Thread scriptThread = null;
-            try (UiProgressReporter reporter = new UiProgressReporter(monitor)) {
+            try (UiProgressReporter reporter = new UiProgressReporter(monitor, SQLEditor.this)) {
                 scriptThread = new Thread(new RunScriptExternal(parser.getScript(),
                         reporter, new ArrayList<>(Arrays.asList(
                                 getReplacedCmd(mainPrefs.getString(DB_UPDATE_PREF.MIGRATION_COMMAND), dbInfo).split(" "))))); //$NON-NLS-1$
@@ -728,6 +827,50 @@ public class SQLEditor extends AbstractDecoratedTextEditor implements IResourceC
             } finally {
                 reporter.terminate();
                 afterScriptFinished();
+            }
+        }
+    }
+
+    private class EditorSelectionChangedListener extends AbstractSelectionChangedListener {
+
+        @Override
+        public void selectionChanged(SelectionChangedEvent event) {
+            // remove occurrences in modified file
+            if (isDirty()) {
+                removeOccurrenceAnnotations();
+                return;
+            }
+
+            PgObjLocation selected = getCurrentReference();
+            IDocumentProvider provider = getDocumentProvider();
+
+            if (selected != null && provider != null) {
+                Map<Annotation, Position> annotations = new HashMap<>();
+
+                for (PgObjLocation loc : getReferences()) {
+                    if (loc.compare(selected)) {
+                        annotations.put(new Annotation(MARKER.OBJECT_OCCURRENCE, false, loc.toString()),
+                                new Position(loc.getOffset(), loc.getObjLength()));
+                    }
+                }
+
+                IAnnotationModel model = provider.getAnnotationModel(getEditorInput());
+                if (model == null) {
+                    return;
+                }
+
+                synchronized (getLock(model)) {
+                    if (model instanceof IAnnotationModelExtension) {
+                        ((IAnnotationModelExtension) model).replaceAnnotations(occurrenceAnnotations, annotations);
+                    } else {
+                        removeOccurrenceAnnotations();
+                        for (Entry<Annotation, Position> entry : annotations.entrySet()) {
+                            model.addAnnotation(entry.getKey(), entry.getValue());
+                        }
+                    }
+
+                    occurrenceAnnotations = annotations.keySet().toArray(new Annotation[annotations.size()]);
+                }
             }
         }
     }

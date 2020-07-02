@@ -29,6 +29,7 @@ public interface UIConsts {
     interface MARKER {
         String ERROR = PLUGIN_ID.THIS + ".sql.errormarker"; //$NON-NLS-1$
         String DANGER_ANNOTATION = PLUGIN_ID.THIS + ".sql.dangerannotation"; //$NON-NLS-1$
+        String OBJECT_OCCURRENCE = PLUGIN_ID.THIS + ".sql.objectoccurrence"; //$NON-NLS-1$
     }
 
     interface DECORATOR {
@@ -70,6 +71,7 @@ public interface UIConsts {
         String REUSE_OPEN_COMPARE_EDITOR = "reuseOpenCompareEditors"; //$NON-NLS-1$
         String IGNORE_CONCURRENT_MODIFICATION = "ignoreConcurrentModification"; //$NON-NLS-1$
         String PARSER_CACHE_CLEANING_INTERVAL = "parserCacheCleaningInterval"; //$NON-NLS-1$
+        String HEAP_SIZE_WARNING = "heapSizeWarning"; //$NON-NLS-1$
     }
 
     interface DB_UPDATE_PREF {
@@ -95,6 +97,7 @@ public interface UIConsts {
         String UPDATE = "UPDATE"; //$NON-NLS-1$
         String RESET = "RESET"; //$NON-NLS-1$
         String NO_ACTION = "NO_ACTION"; //$NON-NLS-1$
+        String SHOW_DIFF_ERRORS = "showDiffErrors"; //$NON-NLS-1$
     }
 
     interface SQL_EDITOR_PREF {
@@ -122,15 +125,20 @@ public interface UIConsts {
     interface PROJ_PREF {
         String TIMEZONE = "prefGeneralTimezone"; //$NON-NLS-1$
         String FORCE_UNIX_NEWLINES = "prefForceUnixNewlines"; //$NON-NLS-1$
-        String LAST_DB_STORE = "prefLastDbStore"; //$NON-NLS-1$
-        String LAST_DB_STORE_EDITOR = "prefLastDbStoreEditor"; //$NON-NLS-1$
         String DISABLE_PARSER_IN_EXTERNAL_FILES = "disableParserInExternalFiles"; //$NON-NLS-1$
         String LIB_SAFE_MODE = "libSafeMode"; //$NON-NLS-1$
         String STORAGE_LIST = "storageList"; //$NON-NLS-1$
-        String NAME_OF_BOUND_DB = "nameOfBoundDatabase"; //$NON-NLS-1$
         String ENABLE_PROJ_PREF_ROOT = "prefEnableProjPrefRoot"; //$NON-NLS-1$
         String ENABLE_PROJ_PREF_DB_UPDATE = "prefEnableProjPrefDbUpdate"; //$NON-NLS-1$
         String USE_GLOBAL_IGNORE_LIST = "prefUseGlobalIgnoreList"; //$NON-NLS-1$
+    }
+
+    interface DB_BIND_PREF {
+        String DB_BINDING = PLUGIN_ID.THIS + ".dbbinding"; //$NON-NLS-1$
+
+        String LAST_DB_STORE = "prefLastDbStore"; //$NON-NLS-1$
+        String LAST_DB_STORE_EDITOR = "prefLastDbStoreEditor"; //$NON-NLS-1$
+        String NAME_OF_BOUND_DB = "nameOfBoundDatabase"; //$NON-NLS-1$
     }
 
     interface PROJ_PATH {

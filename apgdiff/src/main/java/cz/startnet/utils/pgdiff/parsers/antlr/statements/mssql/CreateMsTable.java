@@ -3,6 +3,8 @@ package cz.startnet.utils.pgdiff.parsers.antlr.statements.mssql;
 import java.util.Arrays;
 import java.util.List;
 
+import org.antlr.v4.runtime.ParserRuleContext;
+
 import cz.startnet.utils.pgdiff.MsDiffUtils;
 import cz.startnet.utils.pgdiff.parsers.antlr.TSQLParser.ClusteredContext;
 import cz.startnet.utils.pgdiff.parsers.antlr.TSQLParser.Column_def_table_constraintContext;
@@ -13,6 +15,7 @@ import cz.startnet.utils.pgdiff.parsers.antlr.TSQLParser.ExpressionContext;
 import cz.startnet.utils.pgdiff.parsers.antlr.TSQLParser.IdContext;
 import cz.startnet.utils.pgdiff.parsers.antlr.TSQLParser.Identity_valueContext;
 import cz.startnet.utils.pgdiff.parsers.antlr.TSQLParser.Index_optionContext;
+import cz.startnet.utils.pgdiff.parsers.antlr.TSQLParser.Qualified_nameContext;
 import cz.startnet.utils.pgdiff.parsers.antlr.TSQLParser.Table_indexContext;
 import cz.startnet.utils.pgdiff.parsers.antlr.TSQLParser.Table_optionsContext;
 import cz.startnet.utils.pgdiff.parsers.antlr.expr.launcher.MsExpressionAnalysisLauncher;
@@ -21,6 +24,7 @@ import cz.startnet.utils.pgdiff.schema.MsColumn;
 import cz.startnet.utils.pgdiff.schema.MsIndex;
 import cz.startnet.utils.pgdiff.schema.MsTable;
 import cz.startnet.utils.pgdiff.schema.PgDatabase;
+import ru.taximaxim.codekeeper.apgdiff.model.difftree.DbObjType;
 
 public class CreateMsTable extends TableAbstract {
 
@@ -68,7 +72,7 @@ public class CreateMsTable extends TableAbstract {
             fillColumn(colCtx, table);
         }
 
-        List<IdContext> ids = Arrays.asList(ctx.qualified_name().schema, nameCtx);
+        List<ParserRuleContext> ids = Arrays.asList(ctx.qualified_name().schema, nameCtx);
         addSafe(getSchemaSafe(ids), table, ids);
     }
 
@@ -139,5 +143,12 @@ public class CreateMsTable extends TableAbstract {
             String value = option.index_option_value().getText();
             table.addOption(key, value);
         }
+    }
+
+    @Override
+    protected String getStmtAction() {
+        Qualified_nameContext qualNameCtx = ctx.qualified_name();
+        return getStrForStmtAction(ACTION_CREATE, DbObjType.TABLE,
+                Arrays.asList(qualNameCtx.schema, qualNameCtx.name));
     }
 }

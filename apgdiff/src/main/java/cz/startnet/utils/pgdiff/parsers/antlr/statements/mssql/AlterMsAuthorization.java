@@ -4,6 +4,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
+import org.antlr.v4.runtime.ParserRuleContext;
+
 import cz.startnet.utils.pgdiff.parsers.antlr.TSQLParser.Alter_authorizationContext;
 import cz.startnet.utils.pgdiff.parsers.antlr.TSQLParser.Class_typeContext;
 import cz.startnet.utils.pgdiff.parsers.antlr.TSQLParser.IdContext;
@@ -11,7 +13,6 @@ import cz.startnet.utils.pgdiff.parsers.antlr.statements.ParserAbstract;
 import cz.startnet.utils.pgdiff.schema.AbstractSchema;
 import cz.startnet.utils.pgdiff.schema.PgDatabase;
 import cz.startnet.utils.pgdiff.schema.PgStatement;
-import cz.startnet.utils.pgdiff.schema.StatementActions;
 import cz.startnet.utils.pgdiff.schema.StatementOverride;
 import ru.taximaxim.codekeeper.apgdiff.model.difftree.DbObjType;
 
@@ -33,7 +34,7 @@ public class AlterMsAuthorization extends ParserAbstract {
 
     @Override
     public void parseObject() {
-        IdContext ownerId = ctx.authorization_grantee().principal_name;
+        IdContext ownerId = ctx.authorization_grantee().id();
         if (db.getArguments().isIgnorePrivileges() || ownerId == null) {
             return;
         }
@@ -41,7 +42,7 @@ public class AlterMsAuthorization extends ParserAbstract {
 
         Class_typeContext type = ctx.class_type();
         IdContext nameCtx = ctx.entity.name;
-        List<IdContext> ids = Arrays.asList(ctx.entity.schema, nameCtx);
+        List<ParserRuleContext> ids = Arrays.asList(ctx.entity.schema, nameCtx);
 
         PgStatement st = null;
         if (type == null || type.OBJECT() != null || type.TYPE() != null) {
@@ -53,16 +54,16 @@ public class AlterMsAuthorization extends ParserAbstract {
 
             // when type is not defined (sometimes in ref mode), suppose it is a table
             addObjReference(Arrays.asList(schemaCtx, nameCtx),
-                    st != null ? st.getStatementType() : DbObjType.TABLE, StatementActions.ALTER);
+                    st != null ? st.getStatementType() : DbObjType.TABLE, ACTION_ALTER);
         } else if (type.ASSEMBLY() != null) {
             st = getSafe(PgDatabase::getAssembly, db, nameCtx);
-            addObjReference(Arrays.asList(nameCtx), DbObjType.ASSEMBLY, StatementActions.ALTER);
+            addObjReference(Arrays.asList(nameCtx), DbObjType.ASSEMBLY, ACTION_ALTER);
         } else if (type.ROLE() != null) {
             st = getSafe(PgDatabase::getRole, db, nameCtx);
-            addObjReference(Arrays.asList(nameCtx), DbObjType.ROLE, StatementActions.ALTER);
+            addObjReference(Arrays.asList(nameCtx), DbObjType.ROLE, ACTION_ALTER);
         } else if (type.SCHEMA() != null) {
             st = getSafe(PgDatabase::getSchema, db, nameCtx);
-            addObjReference(Arrays.asList(nameCtx), DbObjType.SCHEMA, StatementActions.ALTER);
+            addObjReference(Arrays.asList(nameCtx), DbObjType.SCHEMA, ACTION_ALTER);
         }
 
         if (st != null) {
@@ -76,5 +77,10 @@ public class AlterMsAuthorization extends ParserAbstract {
         } else {
             overrides.computeIfAbsent(st, k -> new StatementOverride()).setOwner(owner);
         }
+    }
+
+    @Override
+    protected String getStmtAction() {
+        return new StringBuilder(ACTION_ALTER).append(" AUTHORIZATION").toString();
     }
 }

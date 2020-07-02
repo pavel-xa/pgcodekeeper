@@ -3,6 +3,8 @@ package cz.startnet.utils.pgdiff.parsers.antlr.statements.mssql;
 import java.util.Arrays;
 import java.util.List;
 
+import org.antlr.v4.runtime.ParserRuleContext;
+
 import cz.startnet.utils.pgdiff.parsers.antlr.TSQLParser.ClusteredContext;
 import cz.startnet.utils.pgdiff.parsers.antlr.TSQLParser.Column_with_orderContext;
 import cz.startnet.utils.pgdiff.parsers.antlr.TSQLParser.Create_indexContext;
@@ -13,6 +15,7 @@ import cz.startnet.utils.pgdiff.parsers.antlr.TSQLParser.Index_optionsContext;
 import cz.startnet.utils.pgdiff.parsers.antlr.TSQLParser.Index_restContext;
 import cz.startnet.utils.pgdiff.parsers.antlr.TSQLParser.Index_sortContext;
 import cz.startnet.utils.pgdiff.parsers.antlr.TSQLParser.Index_whereContext;
+import cz.startnet.utils.pgdiff.parsers.antlr.TSQLParser.Qualified_nameContext;
 import cz.startnet.utils.pgdiff.parsers.antlr.statements.ParserAbstract;
 import cz.startnet.utils.pgdiff.schema.AbstractIndex;
 import cz.startnet.utils.pgdiff.schema.AbstractSchema;
@@ -20,7 +23,6 @@ import cz.startnet.utils.pgdiff.schema.IStatementContainer;
 import cz.startnet.utils.pgdiff.schema.MsIndex;
 import cz.startnet.utils.pgdiff.schema.PgDatabase;
 import cz.startnet.utils.pgdiff.schema.PgStatement;
-import cz.startnet.utils.pgdiff.schema.StatementActions;
 import ru.taximaxim.codekeeper.apgdiff.model.difftree.DbObjType;
 
 public class CreateMsIndex extends ParserAbstract {
@@ -37,10 +39,9 @@ public class CreateMsIndex extends ParserAbstract {
         IdContext schemaCtx = ctx.qualified_name().schema;
         IdContext tableCtx = ctx.qualified_name().name;
         IdContext nameCtx = ctx.name;
-        List<IdContext> ids = Arrays.asList(schemaCtx, nameCtx);
+        List<ParserRuleContext> ids = Arrays.asList(schemaCtx, nameCtx);
         AbstractSchema schema = getSchemaSafe(ids);
-        addObjReference(Arrays.asList(schemaCtx, tableCtx),
-                DbObjType.TABLE, StatementActions.NONE);
+        addObjReference(Arrays.asList(schemaCtx, tableCtx), DbObjType.TABLE, null);
 
         AbstractIndex ind = new MsIndex(nameCtx.getText());
         ind.setUnique(ctx.UNIQUE() != null);
@@ -88,5 +89,12 @@ public class CreateMsIndex extends ParserAbstract {
         if (tablespace != null) {
             ind.setTablespace(tablespace.getText());
         }
+    }
+
+    @Override
+    protected String getStmtAction() {
+        Qualified_nameContext qualNameCtx = ctx.qualified_name();
+        return getStrForStmtAction(ACTION_CREATE, DbObjType.INDEX,
+                Arrays.asList(qualNameCtx.schema, qualNameCtx.name, ctx.name));
     }
 }

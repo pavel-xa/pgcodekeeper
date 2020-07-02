@@ -93,10 +93,10 @@ public class AntlrParser {
     }
 
     public static <T extends Parser> T makeBasicParser(Class<T> parserClass, String string,
-            String parsedObjectName, List<Object> errors, TerminalNode codeStart) {
-        int offset = codeStart.getSymbol().getStartIndex();
-        int lineOffset = codeStart.getSymbol().getLine() - 1;
-        int inLineOffset = codeStart.getSymbol().getCharPositionInLine();
+            String parsedObjectName, List<Object> errors, Token codeStart) {
+        int offset = codeStart.getStartIndex();
+        int lineOffset = codeStart.getLine() - 1;
+        int inLineOffset = codeStart.getCharPositionInLine();
         return makeBasicParser(parserClass, new ANTLRInputStream(string),
                 parsedObjectName, errors, offset, lineOffset, inLineOffset);
     }
@@ -154,7 +154,7 @@ public class AntlrParser {
             try {
                 listener.process(pair.getFirst(), pair.getSecond());
             } catch (UnresolvedReferenceException ex) {
-                errors.add(CustomSQLParserListener.handleUnresolvedReference(ex, parsedObjectName));
+                errors.add(CustomParserListener.handleUnresolvedReference(ex, parsedObjectName));
             }
         });
     }
@@ -171,16 +171,16 @@ public class AntlrParser {
                 parser.addParseListener(new CustomParseTreeListener(
                         monitoringLevel, mon == null ? new NullProgressMonitor() : mon));
                 saveTimeOfLastParserStart(true);
-                return new Pair<>(parser, parser.tsql_file());
+                return new Pair<>((CommonTokenStream) parser.getInputStream(),
+                        parser.tsql_file());
             } catch (MonitorCancelledRuntimeException mcre){
                 throw new InterruptedException();
             }
         }, pair -> {
             try {
-                listener.process(pair.getSecond(),
-                        (CommonTokenStream) pair.getFirst().getInputStream());
+                listener.process(pair.getSecond(), pair.getFirst());
             } catch (UnresolvedReferenceException ex) {
-                errors.add(CustomTSQLParserListener.handleUnresolvedReference(ex, parsedObjectName));
+                errors.add(CustomParserListener.handleUnresolvedReference(ex, parsedObjectName));
             }
         });
     }

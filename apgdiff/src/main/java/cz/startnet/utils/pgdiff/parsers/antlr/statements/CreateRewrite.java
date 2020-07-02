@@ -1,5 +1,6 @@
 package cz.startnet.utils.pgdiff.parsers.antlr.statements;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
@@ -12,10 +13,9 @@ import cz.startnet.utils.pgdiff.parsers.antlr.expr.launcher.RuleAnalysisLauncher
 import cz.startnet.utils.pgdiff.schema.AbstractSchema;
 import cz.startnet.utils.pgdiff.schema.IStatementContainer;
 import cz.startnet.utils.pgdiff.schema.PgDatabase;
+import cz.startnet.utils.pgdiff.schema.PgEventType;
 import cz.startnet.utils.pgdiff.schema.PgRule;
-import cz.startnet.utils.pgdiff.schema.PgRule.PgRuleEventType;
 import cz.startnet.utils.pgdiff.schema.PgStatement;
-import cz.startnet.utils.pgdiff.schema.StatementActions;
 import ru.taximaxim.codekeeper.apgdiff.model.difftree.DbObjType;
 
 public class CreateRewrite extends ParserAbstract {
@@ -29,10 +29,10 @@ public class CreateRewrite extends ParserAbstract {
     @Override
     public void parseObject() {
         List<IdentifierContext> ids = ctx.table_name.identifier();
-        addObjReference(ids, DbObjType.TABLE, StatementActions.NONE);
+        addObjReference(ids, DbObjType.TABLE, null);
 
         PgRule rule = new PgRule(ctx.name.getText());
-        rule.setEvent(PgRuleEventType.valueOf(ctx.event.getText().toUpperCase(Locale.ROOT)));
+        rule.setEvent(PgEventType.valueOf(ctx.event.getText().toUpperCase(Locale.ROOT)));
         if (ctx.INSTEAD() != null){
             rule.setInstead(true);
         }
@@ -56,5 +56,12 @@ public class CreateRewrite extends ParserAbstract {
         }
 
         db.addAnalysisLauncher(new RuleAnalysisLauncher(rule, ctx, location));
+    }
+
+    @Override
+    protected String getStmtAction() {
+        List<IdentifierContext> ids = new ArrayList<>(ctx.table_name.identifier());
+        ids.add(ctx.name);
+        return getStrForStmtAction(ACTION_CREATE, DbObjType.RULE, ids);
     }
 }

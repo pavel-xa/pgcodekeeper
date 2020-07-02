@@ -32,7 +32,6 @@ import cz.startnet.utils.pgdiff.schema.PgIndex;
 import cz.startnet.utils.pgdiff.schema.PgSequence;
 import cz.startnet.utils.pgdiff.schema.PgStatement;
 import cz.startnet.utils.pgdiff.schema.SourceStatement;
-import cz.startnet.utils.pgdiff.schema.StatementActions;
 import cz.startnet.utils.pgdiff.schema.TypedPgTable;
 import ru.taximaxim.codekeeper.apgdiff.model.difftree.DbObjType;
 
@@ -432,7 +431,9 @@ public class DepcyResolver {
 
             // если объект (таблица) создается, запускаем создание зависимостей ее колонок
             // сами колонки создадутся неявно вместе с таблицей
-            createColumnDependencies(newObj);
+            if (action == StatementActions.CREATE) {
+                createColumnDependencies(newObj);
+            }
 
             // создать колонку при создании сиквенса с owned by
             if (newObj instanceof PgSequence) {
